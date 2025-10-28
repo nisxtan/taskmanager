@@ -1,14 +1,8 @@
 const express = require("express");
 const router = require("./router.config");
+const AppDataSource = require("./database"); // Import the single instance
 
 const app = express();
-
-// app.use(
-//   rateLimit({
-//     windowMs: 60000,
-//     limit: 30,
-//   })
-// );
 
 app.use(
   express.json({
@@ -22,11 +16,23 @@ app.use(
   })
 );
 
-//versioning
+// Initialize the database
+AppDataSource.initialize()
+  .then(() => {
+    console.log("Database connected");
 
-app.use("api/v1", router);
+    // Store the initialized AppDataSource in app settings
+    app.set("AppDataSource", AppDataSource);
+  })
+  .catch((err) => {
+    console.error("DB connection error:", err);
+    process.exit(1);
+  });
 
-//errors
+// Versioning
+app.use("/api/v1", router);
+
+// Error handlers
 app.use((req, res, next) => {
   next({
     detail: "value",
@@ -35,7 +41,6 @@ app.use((req, res, next) => {
     status: "RESOURCE_NOT_FOUND",
     options: null,
   });
-  console.log("iamhere");
 });
 
 app.use((error, req, res, next) => {
@@ -45,11 +50,6 @@ app.use((error, req, res, next) => {
   let message = error.message || "Internal Server Error";
   let status = error.status || "";
 
-  //del condition pachi halne
-
-  //mongodb chalaune vaye yeta chaicha unique validator
-
-  //? generic middleware
   res.status(code).json({
     error: detail,
     message: message,
