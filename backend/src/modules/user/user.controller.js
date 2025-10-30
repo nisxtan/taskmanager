@@ -6,7 +6,10 @@ class UserController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const data = req.body;
-
+      console.log("Received data:", data);
+      console.log("Username:", data.username);
+      console.log("Email:", data.email);
+      console.log("Password:", data.password);
       if (!data.username || !data.email || !data.password) {
         return res.status(400).json({
           message: "All fields are required!!",

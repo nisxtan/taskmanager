@@ -1,8 +1,16 @@
 const express = require("express");
+const cors = require("cors");
 const router = require("./router.config");
 const AppDataSource = require("./database"); // Import the single instance
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(
   express.json({

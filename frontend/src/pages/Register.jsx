@@ -26,7 +26,7 @@ const Register = () => {
     setLoading(true);
     try {
       const response = await userService.register(formData);
-      console.log("Registration successfull", response);
+      console.log("Registration successful", response);
 
       alert("Registration successful");
       navigate("/login");
