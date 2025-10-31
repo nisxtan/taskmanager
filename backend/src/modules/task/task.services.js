@@ -8,6 +8,7 @@ module.exports.createTask = async (AppDataSource, taskData) => {
     title: taskData.title,
     description: taskData.description || null,
     isDone: false,
+    userId: taskData.userId,
   });
 
   await taskRepo.save(newTask);

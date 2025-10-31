@@ -22,7 +22,7 @@ const taskService = {
   delete: async (id) => {
     try {
       const response = await axiosInstance.delete(`/task/${id}`);
-      return response.data; // delete might return just a message
+      return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
@@ -30,9 +30,8 @@ const taskService = {
 
   toggleStatus: async (id) => {
     try {
-      // adjust endpoint if your backend uses a different route (e.g. PATCH /task/:id/toggle)
-      const response = await axiosInstance.patch(`/task/toggle/${id}`);
-      return response.data.data; // updated task with toggled isDone
+      const response = await axiosInstance.patch(`/task/${id}/toggle`); // ✅ Fixed
+      return response.data.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
@@ -48,4 +47,4 @@ const taskService = {
   },
 };
 
-export default axiosInstance;
+export default taskService;

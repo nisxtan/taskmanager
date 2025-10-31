@@ -8,6 +8,7 @@ module.exports = new EntitySchema({
     title: { type: "varchar" },
     description: { type: "text", nullable: true },
     isDone: { type: "boolean", default: false },
+    userId: { type: "int", nullable: false },
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
   },

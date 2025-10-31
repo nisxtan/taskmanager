@@ -4,7 +4,7 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const data = req.body;
-      console.log(data);
+      // console.log(data);
       if (!data.title) {
         return res.status(400).json({
           message: "Title is required",

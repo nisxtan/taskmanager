@@ -31,7 +31,7 @@ const Login = () => {
       const response = await userService.login(formData);
       console.log("Login successful:", response);
       alert("Login successful!");
-      navigate("/dashboard");
+      navigate("/home");
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.message || "Login failed. Please try again.");
