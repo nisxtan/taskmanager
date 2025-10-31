@@ -30,6 +30,12 @@ const Login = () => {
     try {
       const response = await userService.login(formData);
       console.log("Login successful:", response);
+
+      //local storage ma store gareko
+      localStorage.setItem("userId", response.data.id);
+      localStorage.setItem("username", response.data.username);
+      localStorage.setItem("email", response.data.email);
+
       alert("Login successful!");
       navigate("/home");
     } catch (err) {

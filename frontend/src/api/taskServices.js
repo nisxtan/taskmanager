@@ -3,7 +3,8 @@ import axiosInstance from "./axios";
 const taskService = {
   getAll: async () => {
     try {
-      const response = await axiosInstance.get("/task");
+      const userId = localStorage.getItem("userId"); // ✅ Get userId
+      const response = await axiosInstance.get(`/task?userId=${userId}`);
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -12,7 +13,11 @@ const taskService = {
 
   create: async (taskData) => {
     try {
-      const response = await axiosInstance.post("/task", taskData);
+      const userId = localStorage.getItem("userId"); // ✅ Get userId
+      const response = await axiosInstance.post("/task", {
+        ...taskData,
+        userId: parseInt(userId), // ✅ Include userId
+      });
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -21,7 +26,10 @@ const taskService = {
 
   delete: async (id) => {
     try {
-      const response = await axiosInstance.delete(`/task/${id}`);
+      const userId = localStorage.getItem("userId");
+      const response = await axiosInstance.delete(
+        `/task/${id}?userId=${userId}`
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -30,7 +38,10 @@ const taskService = {
 
   toggleStatus: async (id) => {
     try {
-      const response = await axiosInstance.patch(`/task/${id}/toggle`); // ✅ Fixed
+      const userId = localStorage.getItem("userId"); //
+      const response = await axiosInstance.patch(`/task/${id}/toggle`, {
+        userId: parseInt(userId),
+      });
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -39,7 +50,11 @@ const taskService = {
 
   update: async (id, updateData) => {
     try {
-      const response = await axiosInstance.put(`/task/${id}`, updateData);
+      const userId = localStorage.getItem("userId"); // ✅ Get userId
+      const response = await axiosInstance.put(`/task/${id}`, {
+        ...updateData,
+        userId: parseInt(userId),
+      });
       return response.data.data;
     } catch (error) {
       throw error.response?.data || error.message;

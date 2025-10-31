@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import taskService from "../api/taskServices";
-
+import { Navigate, useNavigate } from "react-router-dom";
 const TaskManager = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,6 +39,15 @@ const TaskManager = () => {
       [name]: value,
     }));
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    navigate("/login");
+  };
+
+  // Add this button in your JSX
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -274,6 +284,13 @@ const TaskManager = () => {
             ))
           )}
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

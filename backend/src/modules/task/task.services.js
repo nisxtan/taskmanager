@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const AppDataSource = require("../../config/database");
 const Task = require("../../entity/Task");
 
@@ -15,10 +16,11 @@ module.exports.createTask = async (AppDataSource, taskData) => {
   return newTask;
 };
 
-module.exports.getAll = async (AppDataSource) => {
+module.exports.getAll = async (AppDataSource, userId) => {
   const taskRepo = AppDataSource.getRepository(Task);
 
   const taskList = await taskRepo.find({
+    where: { userId: userId },
     order: {
       createdAt: "DESC",
     },
@@ -26,20 +28,20 @@ module.exports.getAll = async (AppDataSource) => {
   return taskList;
 };
 
-module.exports.getTaskById = async (AppDataSource, id) => {
+module.exports.getTaskById = async (AppDataSource, id, userId) => {
   const taskRepo = AppDataSource.getRepository(Task);
 
-  const task = await taskRepo.findOne({ where: { id } });
+  const task = await taskRepo.findOne({ where: { id, userId } });
   if (!task) {
     throw { code: 404, message: "Task not found" };
   }
   return task;
 };
 
-module.exports.updateTask = async (AppDataSource, id, newDetails) => {
+module.exports.updateTask = async (AppDataSource, id, userId, newDetails) => {
   const taskRepo = AppDataSource.getRepository(Task);
 
-  const task = await taskRepo.findOne({ where: { id } });
+  const task = await taskRepo.findOne({ where: { id, userId } });
   if (!task) {
     throw { code: 404, message: "Task not found" };
   }
@@ -48,9 +50,9 @@ module.exports.updateTask = async (AppDataSource, id, newDetails) => {
   return updatedTask;
 };
 
-module.exports.deleteTask = async (AppDataSource, id) => {
+module.exports.deleteTask = async (AppDataSource, id, userId) => {
   const taskRepo = AppDataSource.getRepository(Task);
-  const task = await taskRepo.findOne({ where: { id } });
+  const task = await taskRepo.findOne({ where: { id, userId } });
   if (!task) {
     throw { code: 404, message: "Task not found" };
   }
@@ -59,9 +61,9 @@ module.exports.deleteTask = async (AppDataSource, id) => {
   return task;
 };
 
-module.exports.toggleTaskStatus = async (AppDataSource, id) => {
+module.exports.toggleTaskStatus = async (AppDataSource, id, userId) => {
   const taskRepo = AppDataSource.getRepository(Task);
-  const task = await taskRepo.findOne({ where: { id } });
+  const task = await taskRepo.findOne({ where: { id, userId } });
   if (!task) {
     throw { code: 404, message: "Task not found" };
   }

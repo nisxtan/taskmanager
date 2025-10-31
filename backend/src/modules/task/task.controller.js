@@ -3,16 +3,25 @@ class TaskController {
   async createTask(req, res, next) {
     try {
       const AppDataSource = req.app.get("AppDataSource");
-      const data = req.body;
+      const { title, description, userId } = req.body;
       // console.log(data);
-      if (!data.title) {
+      if (!title) {
         return res.status(400).json({
           message: "Title is required",
         });
       }
-      const task = await taskService.createTask(AppDataSource, data);
+      if (!userId) {
+        return res.status(400).json({
+          message: "User id is required",
+        });
+      }
+      const task = await taskService.createTask(AppDataSource, {
+        title,
+        description,
+        userId,
+      });
 
-      res.status(200).json({
+      res.status(201).json({
         message: "Task created successfully",
         data: task,
       });
@@ -23,7 +32,14 @@ class TaskController {
   async getAllTask(req, res, next) {
     try {
       const AppDataSource = req.app.get("AppDataSource");
-      const tasks = await taskService.getAll(AppDataSource);
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          message: "User ID is required!",
+        });
+      }
+      const tasks = await taskService.getAll(AppDataSource, parseInt(userId));
 
       res.status(200).json({
         message: "All tasks fetched",
@@ -37,7 +53,18 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
-      const task = await taskService.getTaskById(AppDataSource, id);
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          message: "User ID is required!",
+        });
+      }
+      const task = await taskService.getTaskById(
+        AppDataSource,
+        id,
+        parseInt(userId)
+      );
       res.status(200).json({
         message: "task fetched successfully",
         data: task,
@@ -52,12 +79,18 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
-      const newData = req.body;
+      const { userId, ...updateData } = req.body;
+      if (!userId) {
+        return res.status(400).json({
+          message: "User id is required",
+        });
+      }
 
       const updatedTask = await taskService.updateTask(
         AppDataSource,
         id,
-        newData
+        parseInt(userId),
+        updateData
       );
 
       res.status(200).json({
@@ -73,8 +106,14 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          message: "User ID is required!",
+        });
+      }
 
-      await taskService.deleteTask(AppDataSource, id);
+      await taskService.deleteTask(AppDataSource, id, parseInt(userId));
 
       res.status(200).json({
         message: "Task deleted successfully",
@@ -88,8 +127,18 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
+      const userId = req.query.userId;
 
-      const updatedTask = await taskService.toggleTaskStatus(AppDataSource, id);
+      if (!userId) {
+        return res.status(400).json({
+          message: "User ID is required!",
+        });
+      }
+      const updatedTask = await taskService.toggleTaskStatus(
+        AppDataSource,
+        id,
+        parseInt(userId)
+      );
 
       res.status(200).json({
         message: `Task marked as ${updatedTask.isDone ? "done" : "undone"}`,
