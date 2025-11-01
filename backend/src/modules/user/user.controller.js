@@ -1,5 +1,6 @@
 const { TopologyDescriptionChangedEvent } = require("typeorm");
 const userService = require("./user.services");
+const { generateToken } = require("../../utils/jwt");
 
 class UserController {
   async register(req, res, next) {
@@ -58,12 +59,21 @@ class UserController {
           message: "Invalid credentials.",
         });
       }
+      //? token
+
+      const token = generateToken({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      });
+
       res.status(200).json({
         message: "Login successfull",
         data: {
           id: user.id,
           username: user.username,
           email: user.email,
+          token: token,
         },
       });
     } catch (err) {

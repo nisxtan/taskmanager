@@ -12,6 +12,10 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -27,6 +31,14 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response) {
       console.log("API Error: ", error.response.data);
+
+      if (error.response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
+        window.location.href = "/login";
+      }
     } else if (error.request) {
       //request made, but no response
       console.error("Network error: ", error.message);

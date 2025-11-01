@@ -11,4 +11,11 @@ module.exports = new EntitySchema({
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
   },
+  // relations: {
+  //   tasks: {
+  //     type: "one-to-many",
+  //     target: "Task",
+  //     inverseSide: "user",
+  //   },
+  // },
 });

@@ -32,6 +32,7 @@ const Login = () => {
       console.log("Login successful:", response);
 
       //local storage ma store gareko
+      localStorage.setItem("token", response.data.token);
       localStorage.setItem("userId", response.data.id);
       localStorage.setItem("username", response.data.username);
       localStorage.setItem("email", response.data.email);

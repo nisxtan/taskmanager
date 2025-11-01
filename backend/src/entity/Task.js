@@ -1,4 +1,4 @@
-const { EntitySchema } = require("typeorm");
+const { EntitySchema, JoinColumn } = require("typeorm");
 
 module.exports = new EntitySchema({
   name: "Task",
@@ -12,4 +12,12 @@ module.exports = new EntitySchema({
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
   },
+  // relations: {
+  //   user: {
+  //     type: "many-to-one",
+  //     target: "user",
+  //     joinColumn: { name: "userId" },
+  //     inverseSide: "tasks",
+  //   },
+  // },
 });

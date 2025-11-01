@@ -3,7 +3,9 @@ class TaskController {
   async createTask(req, res, next) {
     try {
       const AppDataSource = req.app.get("AppDataSource");
-      const { title, description, userId } = req.body;
+      const { title, description } = req.body;
+      const userId = req.user.id;
+
       // console.log(data);
       if (!title) {
         return res.status(400).json({
@@ -32,7 +34,7 @@ class TaskController {
   async getAllTask(req, res, next) {
     try {
       const AppDataSource = req.app.get("AppDataSource");
-      const userId = req.query.userId;
+      const userId = req.user.id;
 
       if (!userId) {
         return res.status(400).json({
@@ -53,7 +55,8 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
-      const userId = req.query.userId;
+      // const userId = req.query.userId;
+      const userId = req.user.id;
 
       if (!userId) {
         return res.status(400).json({
@@ -79,7 +82,9 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
-      const { userId, ...updateData } = req.body;
+      const userId = req.user.id;
+
+      const { updateData } = req.body;
       if (!userId) {
         return res.status(400).json({
           message: "User id is required",
@@ -106,7 +111,8 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
-      const userId = req.query.userId;
+      const userId = req.user.id;
+
       if (!userId) {
         return res.status(400).json({
           message: "User ID is required!",
@@ -127,7 +133,7 @@ class TaskController {
     try {
       const AppDataSource = req.app.get("AppDataSource");
       const id = parseInt(req.params.id, 10);
-      const userId = req.query.userId;
+      const userId = req.user.id;
 
       if (!userId) {
         return res.status(400).json({
