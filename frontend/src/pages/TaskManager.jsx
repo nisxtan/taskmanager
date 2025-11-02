@@ -1,10 +1,21 @@
-"use client";
-
 import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import taskService from "../api/taskServices";
-import { Navigate, useNavigate } from "react-router-dom";
+import {
+  selectUser,
+  selectIsAuthenticated,
+  logout,
+} from "../redux/slices/authSlice";
+
 const TaskManager = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Get user data from Redux
+  const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -41,13 +52,10 @@ const TaskManager = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
+    // ✅ Use Redux logout instead of localStorage
+    dispatch(logout());
     navigate("/login");
   };
-
-  // Add this button in your JSX
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,6 +142,17 @@ const TaskManager = () => {
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
       <div className="w-full max-w-2xl p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
+        {/* ✅ Welcome Message with User Info */}
+        {isAuthenticated && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl border border-teal-200">
+            <h2 className="text-xl font-semibold text-slate-800">
+              👋 Welcome back,{" "}
+              <span className="text-teal-600">{user.username}</span>!
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{user.email}</p>
+          </div>
+        )}
+
         <h1 className="mb-8 text-4xl font-bold text-center bg-gradient-to-r from-slate-800 to-teal-600 bg-clip-text text-transparent">
           📝 My Tasks
         </h1>
@@ -285,11 +304,12 @@ const TaskManager = () => {
           )}
         </div>
 
+        {/* ✅ Logout Button at the bottom */}
         <button
           onClick={handleLogout}
-          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+          className="w-full mt-6 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
         >
-          Logout
+          🚪 Logout
         </button>
       </div>
     </div>

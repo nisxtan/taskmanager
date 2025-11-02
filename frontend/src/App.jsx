@@ -6,14 +6,12 @@ import TaskManager from "./pages/TaskManager";
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<TaskManager />} />
-        <Route path="/" element={<Navigate to="/register" />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/home" element={<TaskManager />} />
+      <Route path="/" element={<Navigate to="/register" />} />
+    </Routes>
   );
 };
 

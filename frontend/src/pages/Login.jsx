@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../redux/slices/authSlice";
 import userService from "../api/userServices";
+// import { ServerCapabilities } from "typeorm";
 
 const Login = () => {
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,11 +35,20 @@ const Login = () => {
       console.log("Login successful:", response);
 
       //local storage ma store gareko
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userId", response.data.id);
-      localStorage.setItem("username", response.data.username);
-      localStorage.setItem("email", response.data.email);
+      // localStorage.setItem("token", response.data.token);
+      // localStorage.setItem("userId", response.data.id);
+      // localStorage.setItem("username", response.data.username);
+      // localStorage.setItem("email", response.data.email);
 
+      //using redux now
+      dispatch(
+        setCredentials({
+          token: response.data.token,
+          id: response.data.id,
+          username: response.data.username,
+          email: response.data.email,
+        })
+      );
       alert("Login successful!");
       navigate("/home");
     } catch (err) {

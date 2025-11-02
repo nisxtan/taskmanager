@@ -1,5 +1,5 @@
 // import { verifyToken } from "../utils/jwt";
-const verifyToken = require("../utils/jwt");
+const { verifyToken } = require("../utils/jwt");
 const authMiddleware = (req, res, next) => {
   try {
     //get token from auth header
@@ -16,7 +16,7 @@ const authMiddleware = (req, res, next) => {
 
     const decoded = verifyToken(token);
 
-    req.uses = {
+    req.user = {
       id: decoded.id,
       email: decoded.email,
       username: decoded.username,
