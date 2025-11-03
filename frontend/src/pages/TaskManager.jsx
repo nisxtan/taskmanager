@@ -141,6 +141,69 @@ const TaskManager = () => {
     }
   };
 
+  const printTask = (task) => {
+    const printWindow = window.open("", "_blank");
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Print Task - ${task.title}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body class="p-8">
+        <div class="max-w-2xl mx-auto">
+          <div class="border-b-2 border-teal-500 pb-4 mb-6">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">${
+              task.title
+            }</h1>
+            <p class="text-sm text-slate-500">
+              Printed on: ${new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+            <span class="inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full ${
+              task.isDone
+                ? "bg-green-100 text-green-800"
+                : "bg-yellow-100 text-yellow-800"
+            }">
+              ${task.isDone ? "✓ Completed" : "⏳ Pending"}
+            </span>
+          </div>
+          
+          <div class="mt-6">
+            <h2 class="text-lg font-semibold text-slate-700 mb-3">Description</h2>
+            <div class="p-4 bg-slate-50 rounded-lg border-l-4 border-teal-500 ${
+              !task.description ? "text-slate-400 italic" : "text-slate-700"
+            }">
+              ${task.description || "No description provided"}
+            </div>
+          </div>
+          
+          <div class="mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-400">
+            Task Manager - ${user?.username || "User"}
+          </div>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
       {/* Navbar */}
@@ -275,6 +338,13 @@ const TaskManager = () => {
                         )}
                       </div>
                       <div className="flex gap-2">
+                        <button
+                          onClick={() => printTask(task)}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
+                          title="Print task"
+                        >
+                          🖨️ Print
+                        </button>
                         <button
                           onClick={() => startEdit(task)}
                           className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
