@@ -84,10 +84,16 @@ class TaskController {
       const id = parseInt(req.params.id, 10);
       const userId = req.user.id;
 
-      const { updateData } = req.body;
+      const updateData = req.body;
       if (!userId) {
         return res.status(400).json({
           message: "User id is required",
+        });
+      }
+
+      if (!updateData || Object.keys(updateData).length === 0) {
+        return res.status(400).json({
+          message: "Update data is required",
         });
       }
 

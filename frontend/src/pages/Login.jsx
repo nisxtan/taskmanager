@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../redux/slices/authSlice";
 import userService from "../api/userServices";
-// import { ServerCapabilities } from "typeorm";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,20 +28,11 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     console.log("Sending login data:", formData);
 
     try {
       const response = await userService.login(formData);
       console.log("Login successful:", response);
-
-      //local storage ma store gareko
-      // localStorage.setItem("token", response.data.token);
-      // localStorage.setItem("userId", response.data.id);
-      // localStorage.setItem("username", response.data.username);
-      // localStorage.setItem("email", response.data.email);
-
-      //using redux now
       dispatch(
         setCredentials({
           token: response.data.token,
@@ -60,19 +52,21 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <h1 className="mb-6 text-3xl font-bold text-center">Login</h1>
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
+      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
+        <h1 className="mb-8 text-3xl font-bold text-center bg-gradient-to-r from-slate-800 to-teal-600 bg-clip-text text-transparent">
+          🔐 Welcome Back
+        </h1>
 
         {error && (
-          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+          <div className="p-4 mb-6 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
+            <label className="block mb-2 text-sm font-semibold text-slate-700">
               Email
             </label>
             <input
@@ -81,13 +75,13 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all bg-slate-50"
               required
             />
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
+            <label className="block mb-2 text-sm font-semibold text-slate-700">
               Password
             </label>
             <input
@@ -96,7 +90,7 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter your password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all bg-slate-50"
               required
             />
           </div>
@@ -104,19 +98,22 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            className="w-full py-3 font-semibold text-white transition-all duration-200 bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl hover:from-teal-600 hover:to-teal-700 hover:shadow-lg active:scale-95 disabled:opacity-70"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Logging in..." : "🚀 Login"}
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          <Link
-            to="/register"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Don't have an account? Register
-          </Link>
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            Don't have an account?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+            >
+              Register now
+            </Link>
+          </p>
         </div>
       </div>
     </div>
