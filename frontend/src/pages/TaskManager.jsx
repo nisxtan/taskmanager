@@ -302,51 +302,102 @@ const TaskManager = () => {
     printWindow.document.close();
   };
 
+  const downloadExcel = () => {
+    //create CSV content
+    const headers = ["No.", "Title", "Description", "Status"];
+    const rows = tasks.map((task, index) => [
+      index + 1,
+      task.title,
+      task.description || "No description",
+      task.isDone ? "Completed" : "Pending",
+    ]);
+
+    //escape fields that contain commas or quotes
+    const escapeCSV = (field) => {
+      if (field == null) return "";
+      const str = String(field);
+      if (str.includes(",") || str.includes('"') || str.includes("/n")) {
+        return `"${str.replace(/"/g, '"')}"`;
+      }
+      return str;
+    };
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map(escapeCSV).join(",")),
+    ].join("\n");
+
+    //create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `tasks_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
       {/* Navbar */}
       <nav className="bg-white shadow-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-teal-600 bg-clip-text text-transparent">
-              📝 Task Manager
-            </h1>
-            {isAuthenticated && (
-              <div className="text-md text-slate-600 border-l-2 border-slate-300 pl-6">
-                Welcome,{" "}
-                <span className="font-semibold text-teal-600">
-                  {user.username}
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 to-teal-600 bg-clip-text text-transparent">
+                📝 Task Manager
+              </h1>
+              {isAuthenticated && (
+                <div className="text-sm sm:text-md text-slate-600 sm:border-l-2 sm:border-slate-300 sm:pl-6">
+                  Welcome,{" "}
+                  <span className="font-semibold text-teal-600">
+                    {user.username}
+                  </span>
+                </div>
+              )}
+            </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={printAllTasks}
-              className="px-4 py-2 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:to-blue-700 transition-all"
-            >
-              Print All
-            </button>
+            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+              <button
+                onClick={printAllTasks}
+                className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:to-blue-700 transition-all whitespace-nowrap flex-shrink-0"
+              >
+                Print All
+              </button>
 
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-4 py-2 font-medium text-white bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all"
-            >
-              ➕ Add Task
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-            >
-              🚪 Logout
-            </button>
+              <button
+                onClick={downloadExcel}
+                className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:to-blue-700 transition-all whitespace-nowrap flex-shrink-0"
+              >
+                Download CSV
+              </button>
+
+              <button
+                onClick={() => setShowModal(true)}
+                className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all whitespace-nowrap flex-shrink-0"
+              >
+                ➕ Add Task
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                🚪 Logout
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {error && (
           <div className="p-4 mb-6 text-sm text-red-700 bg-red-50 rounded-xl border border-red-200">
             {error}
@@ -355,7 +406,9 @@ const TaskManager = () => {
 
         {/* Task List with Heading */}
         <div>
-          <h2 className="text-3xl font-bold text-slate-800 mb-6">Your Tasks</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 sm:mb-6">
+            Your Tasks
+          </h2>
 
           <div className="space-y-3">
             {loading ? (
@@ -365,7 +418,7 @@ const TaskManager = () => {
             ) : tasks.length === 0 ? (
               <div className="py-12 text-center text-slate-500 bg-white rounded-xl shadow">
                 <div className="mb-2 text-6xl">📭</div>
-                <p className="text-lg">
+                <p className="text-lg px-4">
                   No tasks yet. Click "Add Task" to create one!
                 </p>
               </div>
@@ -419,16 +472,16 @@ const TaskManager = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3">
                       <input
                         type="checkbox"
                         checked={task.isDone}
                         onChange={() => toggleTask(task.id)}
-                        className="w-5 h-5 mt-1 cursor-pointer accent-teal-600"
+                        className="w-5 h-5 mt-1 cursor-pointer accent-teal-600 flex-shrink-0"
                       />
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <h3
-                          className={`text-lg font-semibold ${
+                          className={`text-base sm:text-lg font-semibold break-words ${
                             task.isDone
                               ? "line-through text-slate-400"
                               : "text-slate-800"
@@ -437,28 +490,28 @@ const TaskManager = () => {
                           {task.title}
                         </h3>
                         {task.description && (
-                          <p className="mt-1 text-sm text-slate-600">
+                          <p className="mt-1 text-sm text-slate-600 break-words">
                             {task.description}
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
                         <button
                           onClick={() => printTask(task)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
+                          className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
                           title="Print task"
                         >
                           🖨️ Print
                         </button>
                         <button
                           onClick={() => startEdit(task)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
+                          className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
                         >
                           ✏️ Edit
                         </button>
                         <button
                           onClick={() => deleteTask(task.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors"
+                          className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors"
                         >
                           🗑️ Delete
                         </button>
@@ -474,10 +527,10 @@ const TaskManager = () => {
 
       {/* Modal for Adding Task */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 m-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-slate-800">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
                 Add New Task
               </h2>
               <button
@@ -522,7 +575,7 @@ const TaskManager = () => {
                 />
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   type="submit"
                   className="flex-1 py-3 font-semibold text-white bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all"
