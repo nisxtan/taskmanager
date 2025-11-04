@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import taskService from "../api/taskServices";
 import {
   selectUser,
@@ -187,7 +188,7 @@ const TaskManager = () => {
           </div>
           
           <div class="mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-400">
-            Task Manager - ${user?.username || "User"}
+            Task provided by - ${user?.username || "User"}
           </div>
         </div>
         
@@ -200,6 +201,103 @@ const TaskManager = () => {
       </html>
     `;
 
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
+  const printAllTasks = () => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+        <title>All tasks - Task Manager</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+        body{ opacity:0, transition: opacity 0.1s ;}
+        body.loaded{opacity:1;}
+        @media print{
+        .task-card {page-break-inside: avoid;}
+      }
+        </style>
+      </head>
+      <body class="p-8">
+        <div class="max-w-4xl mx-auto">
+          <div class = "border-b-2 border-teal-500 pb-4 mb-8">
+            <h1 class = "text-4xl font-bold text-slate-800 mb-2">
+              Task Manager - All Tasks
+            </h1>
+            <p class = "text-sm text-slate-500">
+              Generated on : ${new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+            <p class="text-sm text-slate-600 mt-1">
+              Total Tasks: ${tasks.length}
+            </p>
+          </div>
+          <div class ="space-y-4">
+              ${tasks
+                .map(
+                  (task, index) => `
+                <div class="task-card border-2 border-slate-200 rounded-lg p-4 bg-white">
+                  <div class="flex items-start gap-3">
+                    <span class="text-lg font-bold text-slate-400">
+                      ${index + 1}
+                    </span>
+                    <div class = "flex-1">
+                      <div class = "flex items-start justify-between gap-4">
+                        <h3 class = "text-xl font-bold text-slate-800 ${
+                          task.isDone ? "line-through" : ""
+                        }">${task.title}
+                        </h3>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                          task.isDone
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }">
+                        ${task.isDone ? "✓ Completed" : "⏳ Pending"}
+                        </span> 
+                      </div>  
+                      ${
+                        task.description
+                          ? `
+                      <p class="mt-2 text-slate-600 text-sm">${task.description}</p>
+                    `
+                          : `
+                      <p class="mt-2 text-slate-400 text-sm italic">No description</p>
+                    `
+                      }
+                    </div>
+                  </div>
+                </div>
+              `
+                )
+                .join("")}
+          </div>
+           
+          <div class="mt-8 pt-4 border-t border-slate-200 text-center text-sm text-slate-400">
+            Task Manager - ${user?.username || "User"}
+          </div>
+        </div>
+           <script>
+          setTimeout(function() {
+            document.body.classList.add('loaded');
+            setTimeout(function() {
+              window.print();
+            }, 100);
+          }, 300);
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
     printWindow.document.write(printContent);
     printWindow.document.close();
   };
@@ -224,6 +322,13 @@ const TaskManager = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={printAllTasks}
+              className="px-4 py-2 font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:to-blue-700 transition-all"
+            >
+              Print All
+            </button>
+
             <button
               onClick={() => setShowModal(true)}
               className="px-4 py-2 font-medium text-white bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all"
