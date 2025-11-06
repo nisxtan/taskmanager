@@ -104,6 +104,17 @@ const AdminLogin = () => {
             {loading ? "Logging in..." : "🚀 Login"}
           </button>
         </form>
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            Not an admin?{" "}
+            <Link
+              to="/login"
+              className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+            >
+              Login as an user.
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
