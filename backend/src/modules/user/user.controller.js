@@ -78,6 +78,12 @@ class UserController {
           message: "User not found",
         });
       }
+      //check if the user is admin
+      if (user.isAdmin) {
+        return res.status(401).json({
+          message: "Admin accounts must use admin login at /admin/login",
+        });
+      }
 
       // check if user registered with Google OAuth
       if (user.googleId) {
@@ -124,6 +130,68 @@ class UserController {
       });
     } catch (err) {
       next(err);
+    }
+  }
+
+  //admin login
+  async adminLogin(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({
+          message: "Email and password are required",
+        });
+      }
+
+      const ADMIN_EMAIL = "admin@taskmanager.com";
+      const ADMIN_PASSWORD = "admin123";
+
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        let adminUser = await userService.findUserByEmail(
+          AppDataSource,
+          ADMIN_EMAIL
+        );
+        if (!adminUser) {
+          //create admin user
+          adminUser = await userService.createUser(AppDataSource, {
+            username: "admin",
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+            isAdmin: true,
+          });
+        } else if (!adminUser.isAdmin) {
+          await userService.updateUser(AppDataSource, adminUser.id, {
+            isAdmin: true,
+          });
+          adminUser.isAdmin = true;
+        }
+
+        //generate token
+        const token = generateToken({
+          id: adminUser.id,
+          email: adminUser.email,
+          username: adminUser.username,
+          isAdmin: true,
+        });
+
+        return res.status(200).json({
+          message: "Admin login successful",
+          data: {
+            id: adminUser.id,
+            username: adminUser.username,
+            email: adminUser.email,
+            isAdmin: true,
+            token: token,
+          },
+        });
+      }
+      return res.status(401).json({
+        message: "Invalid admin credentials",
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
@@ -175,6 +243,12 @@ class UserController {
     } catch (err) {
       next(err);
     }
+  }
+
+  async getAdminDashboard(req, res, next) {
+    res.status(200).json({
+      message: "admin dashboard test",
+    });
   }
 }
 

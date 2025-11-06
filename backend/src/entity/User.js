@@ -15,5 +15,6 @@ module.exports = new EntitySchema({
     password: { type: "varchar", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
+    isAdmin: { type: "boolean", default: false },
   },
 });
