@@ -7,15 +7,13 @@ module.exports = new EntitySchema({
     id: { primary: true, type: "int", generated: true },
     username: { type: "varchar", unique: true },
     email: { type: "varchar", unique: true },
-    password: { type: "varchar" },
+    googleId: {
+      type: "varchar",
+      nullable: true,
+      unique: true,
+    },
+    password: { type: "varchar", nullable: true },
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
   },
-  // relations: {
-  //   tasks: {
-  //     type: "one-to-many",
-  //     target: "Task",
-  //     inverseSide: "user",
-  //   },
-  // },
 });

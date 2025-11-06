@@ -20,4 +20,9 @@ const SMTPConfig = {
   fromAddress: process.env.SMTP_FROM_ADDRESS,
 };
 
-module.exports = { AppConfig, SMTPConfig };
+const GOOGLEConfig = {
+  clientID: process.env.clientID,
+  clientSecret: process.env.clientSecret,
+  callbackURL: process.env.callbackURL,
+};
+module.exports = { AppConfig, SMTPConfig, GOOGLEConfig };

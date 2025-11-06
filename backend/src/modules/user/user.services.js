@@ -1,5 +1,5 @@
-const { where } = require("sequelize");
-const AppDataSource = require("../../config/database");
+// const { where } = require("sequelize");
+// const AppDataSource = require("../../config/database");
 const User = require("../../entity/User");
 const bcrypt = require("bcryptjs");
 
@@ -23,6 +23,12 @@ module.exports.findUserByEmail = async (AppDataSource, email) => {
   const userRepo = AppDataSource.getRepository(User);
   const user = await userRepo.findOne({ where: { email } });
   return user;
+};
+
+//find user by username
+module.exports.findUserByUsername = async (AppDataSource, username) => {
+  const userRepository = AppDataSource.getRepository(User);
+  return await userRepository.findOne({ where: { username } });
 };
 
 //compare passwords

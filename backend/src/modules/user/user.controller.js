@@ -1,4 +1,3 @@
-const { TopologyDescriptionChangedEvent } = require("typeorm");
 const userService = require("./user.services");
 const { generateToken } = require("../../utils/jwt");
 
@@ -14,6 +13,35 @@ class UserController {
       if (!data.username || !data.email || !data.password) {
         return res.status(400).json({
           message: "All fields are required!!",
+        });
+      }
+
+      const existingUser = await userService.findUserByEmail(
+        AppDataSource,
+        data.email
+      );
+      if (existingUser) {
+        if (existingUser.googleId) {
+          return res.status(400).json({
+            message:
+              "This email is already registered with google login, either use a new id or login.",
+          });
+        } else {
+          return res.status(400).json({
+            message:
+              "Email already exists. Please use a different email or login",
+          });
+        }
+      }
+
+      const existingUsername = await userService.findUserByUsername(
+        AppDataSource,
+        data.username
+      );
+      if (existingUsername) {
+        return res.status(400).json({
+          message:
+            "Username already exists. Please choose a different username.",
         });
       }
 
@@ -50,6 +78,23 @@ class UserController {
           message: "User not found",
         });
       }
+
+      // check if user registered with Google OAuth
+      if (user.googleId) {
+        return res.status(401).json({
+          message:
+            "This account uses Google Login. Please click 'Login with Google'.",
+        });
+      }
+
+      //CHECK: If user has no password (OAuth user without googleId - edge case)
+      if (!user.password) {
+        return res.status(401).json({
+          message:
+            "Account authentication error. Please use Google Login or contact support.",
+        });
+      }
+
       const pwMatch = await userService.comparePassword(
         password,
         user.password
@@ -59,6 +104,7 @@ class UserController {
           message: "Invalid credentials.",
         });
       }
+
       //? token
 
       const token = generateToken({
@@ -68,7 +114,7 @@ class UserController {
       });
 
       res.status(200).json({
-        message: "Login successfull",
+        message: "Login successful",
         data: {
           id: user.id,
           username: user.username,

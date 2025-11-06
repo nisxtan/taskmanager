@@ -1,7 +1,32 @@
+const passport = require("passport");
 const userRouter = require("express").Router();
 const validateBody = require("../../middleware/validateBody");
 const userController = require("./user.controller");
 const { registerSchema, loginSchema } = require("./validator");
+const jwt = require("jsonwebtoken");
+
+userRouter.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+userRouter.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "http://localhost:5173/login",
+  }),
+  async (req, res) => {
+    // ✅ GENERATE TOKEN
+    const token = jwt.sign(
+      { id: req.user.id, username: req.user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // ✅ ADD THIS REDIRECT - THIS IS WHAT'S MISSING!
+    res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+  }
+);
 
 //register route
 userRouter.post(
