@@ -13,6 +13,8 @@ const AuthSuccess = () => {
     const token = searchParams.get("token");
     if (token) {
       const decoded = jwtDecode(token);
+      console.log(token);
+      console.log(decoded);
       dispatch(
         setCredentials({
           id: decoded.id,

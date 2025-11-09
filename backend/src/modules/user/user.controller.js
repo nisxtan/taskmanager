@@ -250,6 +250,114 @@ class UserController {
       message: "admin dashboard test",
     });
   }
+
+  //? get all users with their roles
+  async getAllUsersWithRoles(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const userRepository = AppDataSource.getRepository("User");
+
+      const users = await userRepository.find({
+        relations: ["role"],
+        select: ["id", "username", "email", "isAdmin", "createdAt", "roleId"],
+      });
+
+      res.status(200).json({
+        message: "Users with roles fetched successfully",
+        data: users,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //get all roles with permissions
+  async getAllRoles(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const roleRepository = AppDataSource.getRepository("Role");
+
+      const roles = await roleRepository.find({
+        relations: ["permissions"],
+      });
+
+      req.status(200).json({
+        message: "Roles with permission fetched.",
+        data: roles,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //get all permissions
+  async getAllPermissions(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const permissionRepository = AppDataSource.getRepository("Permission");
+      const permissions = await permissionRepository.find();
+      res.status(200).json({
+        message: "Permissions fetched successfully",
+        data: permissions,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //assign role to user
+  async assignRoleToUser(req, res, next) {
+    const AppDataSource = req.app.get("AppDataSource");
+    const userRepository = AppDataSource.getRepository("User");
+    const roleRepository = AppDataSource.getRepository("Role");
+
+    const userId = parseInt(req.params.id);
+    const { roleId } = req.body;
+    const user = await userRepository.findOne({ where: { id: userId } });
+    const role = await userRepository.findOne({ where: { id: roleId } });
+    if (!user || !role) {
+      return res.status(400).json({
+        message: "User or role not found",
+      });
+    }
+
+    user.roleId = roleId;
+    await userRepository.save(user);
+    req.status(200).json({
+      message: "Role assigned successfully",
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: role,
+      },
+    });
+  }
+
+  //remove role form user
+  async removeRoleFromUser(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const userRepository = AppDataSource.getRepository("User");
+
+      const userId = parseInt(req.params.id);
+      const user = await userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      user.roleId = null;
+      await userRepository.save(user);
+      res.status(200).json({
+        message: "Role removed successfully",
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new UserController();

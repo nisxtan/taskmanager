@@ -1,3 +1,18 @@
+// console.log(process.env);
+// console.log("🔍 Environment Variables Check:");
+// console.log(
+//   "GOOGLE_CLIENT_ID:",
+//   process.env.GOOGLE_CLIENT_ID ? "✅ EXISTS" : "❌ MISSING"
+// );
+// console.log(
+//   "GOOGLE_CLIENT_SECRET:",
+//   process.env.GOOGLE_CLIENT_SECRET ? "✅ EXISTS" : "❌ MISSING"
+// );
+// console.log(
+//   "GOOGLE_CALLBACK_URL:",
+//   process.env.GOOGLE_CALLBACK_URL ? "✅ EXISTS" : "❌ MISSING"
+// );
+
 require("./passport");
 const passport = require("passport");
 const express = require("express");
@@ -75,7 +90,7 @@ app.use((req, res, next) => {
 app.use((error, req, res, next) => {
   console.log(error);
 
-  // FIX: Ensure code is always a number
+  // Ensure code is always a number
   let code = 500; // default
 
   if (typeof error.code === "number") {

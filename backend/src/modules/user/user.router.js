@@ -65,4 +65,20 @@ userRouter.put("/:id", userController.updateUser);
 //route to delete users by id
 userRouter.delete("/:id", userController.delete);
 
+//get all users with their roles
+userRouter.get("/admin/users-with-roles", userController.getAllUsersWithRoles);
+
+userRouter.get("/admin/roles", userController.getAllRoles);
+// Get all permissions
+userRouter.get("/admin/permissions", userController.getAllPermissions);
+
+//assign role to user
+userRouter.put("/admin/users/:id/assign-role", userController.assignRoleToUser);
+
+//remove role from user
+userRouter.put(
+  "/admin/users/:id/remove-role",
+  userController.removeRoleFromUser
+);
+
 module.exports = userRouter;

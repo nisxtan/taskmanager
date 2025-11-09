@@ -1,3 +1,7 @@
+// CommonJS version
+require("dotenv").config({
+  path: require("path").resolve(__dirname, "backend/.env"),
+});
 const http = require("http");
 const app = require("./backend/src/config/express.config");
 
