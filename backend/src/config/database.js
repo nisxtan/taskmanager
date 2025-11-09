@@ -2,6 +2,8 @@ const { DataSource } = require("typeorm");
 const { AppConfig } = require("./config");
 const Task = require("../entity/Task");
 const User = require("../entity/User");
+const Role = require("../entity/Role");
+const Permission = require("../entity/Permission");
 
 const AppDataSource = new DataSource({
   type: "postgres",
@@ -12,7 +14,7 @@ const AppDataSource = new DataSource({
   database: AppConfig.DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [Task, User],
+  entities: [Task, User, Role, Permission],
 });
 
 module.exports = AppDataSource;
