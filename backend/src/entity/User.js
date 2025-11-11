@@ -16,5 +16,14 @@ module.exports = new EntitySchema({
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
     isAdmin: { type: "boolean", default: false },
+    roleId: { type: "int", nullable: true },
+  },
+  relations: {
+    role: {
+      type: "many-to-one",
+      target: "Role",
+      joinColumn: { name: "roleId" },
+      nullable: true,
+    },
   },
 });

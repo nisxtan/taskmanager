@@ -5,6 +5,7 @@ const userController = require("./user.controller");
 const { registerSchema, loginSchema } = require("./validator");
 const jwt = require("jsonwebtoken");
 const adminAuth = require("../../middleware/adminAuth");
+const authMiddleware = require("../../middleware/auth.middleware");
 
 //?Google OAuth routes
 
@@ -80,5 +81,53 @@ userRouter.put(
   "/admin/users/:id/remove-role",
   userController.removeRoleFromUser
 );
+
+// Role CRUD routes
+// userRouter.post(
+//   "/admin/roles",
+//   authMiddleware,
+//   adminAuth,
+//   userController.createRole
+// );
+// userRouter.put(
+//   "/admin/roles/:id",
+//   authMiddleware,
+//   adminAuth,
+//   userController.updateRole
+// );
+// userRouter.delete(
+//   "/admin/roles/:id",
+//   authMiddleware,
+//   adminAuth,
+//   userController.deleteRole
+// );
+
+// // Permission CRUD routes
+// userRouter.post(
+//   "/admin/permissions",
+//   authMiddleware,
+//   adminAuth,
+//   userController.createPermission
+// );
+// userRouter.put(
+//   "/admin/permissions/:id",
+//   authMiddleware,
+//   adminAuth,
+//   userController.updatePermission
+// );
+// userRouter.delete(
+//   "/admin/permissions/:id",
+//   authMiddleware,
+//   adminAuth,
+//   userController.deletePermission
+// );
+
+// // Role-Permission management
+// userRouter.put(
+//   "/admin/roles/:id/permissions",
+//   authMiddleware,
+//   adminAuth,
+//   userController.assignPermissionsToRole
+// );
 
 module.exports = userRouter;

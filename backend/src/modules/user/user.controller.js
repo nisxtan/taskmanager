@@ -1,5 +1,6 @@
 const userService = require("./user.services");
 const { generateToken } = require("../../utils/jwt");
+const { In } = require("typeorm");
 
 class UserController {
   async register(req, res, next) {
@@ -111,12 +112,45 @@ class UserController {
         });
       }
 
+      //get user with role and permission
+      const userRepository = AppDataSource.getRepository("User");
+      const userWithPermissions = await userRepository.findOne({
+        where: { id: user.id },
+        relations: ["role", "role.permissions"],
+      });
+      // In your login method, after fetching userWithPermissions
+      // console.log(
+      //   "🔍 RAW PERMISSIONS FROM DB:",
+      //   userWithPermissions.role?.permissions
+      // );
+      // console.log(
+      //   "🔍 PERMISSION NAMES:",
+      //   userWithPermissions.role?.permissions?.map((p) => p.name)
+      // );
+
+      //determine permissions from role
+      // Since we know permissions exist from the earlier debug, just use them
+      const permissions = userWithPermissions.role.permissions.map(
+        (p) => p.name
+      );
+
       //? token
 
       const token = generateToken({
         id: user.id,
         email: user.email,
         username: user.username,
+        permissions: permissions,
+        role: userWithPermissions.role ? userWithPermissions.role.name : null,
+      });
+      console.log("🔍 FINAL RESPONSE PERMISSIONS:", permissions);
+      console.log("🔍 FULL RESPONSE DATA:", {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        token: token,
+        permissions: permissions, // This should show all three
+        role: userWithPermissions?.role?.name || null,
       });
 
       res.status(200).json({
@@ -126,6 +160,8 @@ class UserController {
           username: user.username,
           email: user.email,
           token: token,
+          permissions: permissions,
+          role: userWithPermissions.role ? userWithPermissions.role.name : null,
         },
       });
     } catch (err) {
@@ -168,12 +204,47 @@ class UserController {
           adminUser.isAdmin = true;
         }
 
+        //get admin user with roles and permission
+        const userRepository = AppDataSource.getRepository("User");
+        const adminWithPermissions = await userRepository.findOne({
+          where: { id: adminUser.id },
+          relations: ["role", "role.permissions"],
+        });
+
+        //admin permissions - combine role permissions with admin defaults
+        let permissions = [];
+        if (
+          adminWithPermissions.role &&
+          adminWithPermissions.role.permissions
+        ) {
+          permissions = adminWithPermissions.role.permissions.map(
+            (p) => p.name
+          );
+        }
+
+        //add admin-specific permission
+        const adminDefaultPermissions = [
+          "CREATE_TASK",
+          "EDIT_TASK",
+          "DELETE_TASK",
+          "VIEW_TASKS",
+          "manage_users",
+          "manage_roles",
+          "admin_dashboard",
+        ];
+
+        //merge and remove duplicates
+        permissions = [
+          ...new Set([...permissions, ...adminDefaultPermissions]),
+        ];
+
         //generate token
         const token = generateToken({
           id: adminUser.id,
           email: adminUser.email,
           username: adminUser.username,
           isAdmin: true,
+          permissions: permissions,
         });
 
         return res.status(200).json({
@@ -184,6 +255,10 @@ class UserController {
             email: adminUser.email,
             isAdmin: true,
             token: token,
+            permissions: permissions, // send actual permissions
+            role: adminDefaultPermissions.role
+              ? adminDefaultPermissions.role.name
+              : "admin",
           },
         });
       }
@@ -213,7 +288,7 @@ class UserController {
   async updateUser(req, res, next) {
     try {
       const AppDataSource = req.app.get("AppDataSource");
-      const id = parseInt(req.params.id, 10); // 👈 convert to number
+      const id = parseInt(req.params.id, 10); //  convert to number
       const newData = req.body;
 
       const updatedUser = await userService.updateUser(
@@ -281,7 +356,7 @@ class UserController {
         relations: ["permissions"],
       });
 
-      req.status(200).json({
+      res.status(200).json({
         message: "Roles with permission fetched.",
         data: roles,
       });
@@ -314,7 +389,7 @@ class UserController {
     const userId = parseInt(req.params.id);
     const { roleId } = req.body;
     const user = await userRepository.findOne({ where: { id: userId } });
-    const role = await userRepository.findOne({ where: { id: roleId } });
+    const role = await roleRepository.findOne({ where: { id: roleId } });
     if (!user || !role) {
       return res.status(400).json({
         message: "User or role not found",
@@ -323,7 +398,7 @@ class UserController {
 
     user.roleId = roleId;
     await userRepository.save(user);
-    req.status(200).json({
+    res.status(200).json({
       message: "Role assigned successfully",
       data: {
         id: user.id,
@@ -353,6 +428,269 @@ class UserController {
       res.status(200).json({
         message: "Role removed successfully",
         data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //!Create new role
+
+  async createRole(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { name, description, permissions } = req.body;
+      const roleRepository = AppDataSource.getRepository("Role");
+      const permissionRepository = AppDataSource.getRepository("Permission");
+
+      //check if role already exists
+      const existingRole = await roleRepository.findOne({ where: { name } });
+      if (existingRole) {
+        return res.status(400).json({
+          message: "Role already exists.",
+        });
+      }
+
+      //find permisssions by id
+      let permissionEntities = [];
+      if (permissions && permissions.length > 0) {
+        permissionEntities = await permissionRepository.find({
+          where: { id: In(permissions) },
+        });
+      }
+
+      //?create and save role
+      const role = roleRepository.create({
+        name,
+        description,
+        permissions: permissionEntities,
+      });
+      await roleRepository.save(role);
+
+      res.status(201).json({
+        message: "Role created successfully",
+        data: role,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //!update role
+  async updateRole(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { id } = req.params;
+      const { name, description } = req.body;
+
+      if (!name && !description) {
+        return res.status(400).json({
+          message: "Name or description is required to update",
+        });
+      }
+
+      const roleRepository = AppDataSource.getRepository("Role");
+
+      const role = await roleRepository.findOne({
+        where: { id: parseInt(id) },
+      });
+
+      if (!role) {
+        return res.status(404).json({
+          message: "Role not found",
+        });
+      }
+
+      // Check if name is being changed and already exists
+      if (name && name !== role.name) {
+        const existingRole = await roleRepository.findOne({ where: { name } });
+        if (existingRole) {
+          return res.status(400).json({
+            message: "Role name already exists",
+          });
+        }
+        role.name = name;
+      }
+
+      if (description) role.description = description;
+
+      await roleRepository.save(role);
+
+      res.status(200).json({
+        message: "Role updated successfully",
+        data: role,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //!delete role
+  async deleteRole(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { id } = req.params;
+      const roleRepository = AppDataSource.getRepository("Role");
+      const userRepository = AppDataSource.getRepository("User");
+
+      // Check if any users have this role
+      const usersWithRole = await userRepository.find({
+        where: { roleId: parseInt(id) },
+      });
+
+      if (usersWithRole.length > 0) {
+        return res.status(400).json({
+          message: "Cannot delete role. There are users assigned to this role.",
+        });
+      }
+
+      const result = await roleRepository.delete(parseInt(id));
+
+      if (result.affected === 0) {
+        return res.status(404).json({
+          message: "Role not found",
+        });
+      }
+
+      res.status(200).json({
+        message: "Role deleted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //!!!! permission CRUD
+  //! Create new permission
+  async createPermission(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { name, description } = req.body;
+      const permissionRepository = AppDataSource.getRepository("Permission");
+
+      // Check if permission already exists
+      const existingPermission = await permissionRepository.findOne({
+        where: { name },
+      });
+
+      if (existingPermission) {
+        return res.status(400).json({
+          message: "Permission already exists",
+        });
+      }
+
+      const permission = permissionRepository.create({
+        name,
+        description,
+      });
+
+      await permissionRepository.save(permission);
+
+      res.status(201).json({
+        message: "Permission created successfully",
+        data: permission,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //!update permission
+  async updatePermission(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { id } = req.params;
+      const { name, description } = req.body;
+      const permissionRepository = AppDataSource.getRepository("Permission");
+
+      const permission = await permissionRepository.findOne({
+        where: { id: parseInt(id) },
+      });
+      if (!permission) {
+        return res.status(404).json({
+          message: "Permission not found",
+        });
+      }
+      if (name) permission.name = name;
+      if (description) permission.description = description;
+
+      await permissionRepository.save(permission);
+
+      res.status(200).json({
+        message: "permission updated successfully",
+        data: permission,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //!delete permission
+  async deletePermission(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { id } = req.params;
+      const permissionRepository = AppDataSource.getRepository("Permission");
+      const roleRepository = AppDataSource.getRepository("Role");
+
+      //check if any roles have this permission
+      const allRoles = await roleRepository.find({
+        relations: ["permissions"],
+      });
+
+      const rolesWithPermission = allRoles.filter((role) =>
+        role.permission.some((permission) => permission.id === parseInt(id))
+      );
+      if (rolesWithPermission > 0) {
+        return res.status(400).json({
+          message: "Cannot delete permission, it is assigned to some users",
+        });
+      }
+      const result = await permissionRepository.delete(parseInt(id));
+      if (result.affected === 0) {
+        return res.status(400).json({
+          message: "Permission not found",
+        });
+      }
+      res.status(200).json({
+        message: "Permission deleted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async assignPermissionsToRole(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { id } = req.params;
+      const { permissions } = req.body;
+      const roleRepository = AppDataSource.getRepository("Role");
+      const permissionRepository = AppDataSource.getRepository("Permission");
+      const role = await roleRepository.findOne({
+        where: { id: parseInt(id) },
+        relations: ["permissions"],
+      });
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      const permissionEntities = [];
+      for (const permId of permissions) {
+        const permission = await permissionRepository.findOne({
+          where: { id: permId },
+        });
+        if (permission) {
+          permissionEntities.push(permission);
+        }
+      }
+      if (permissionEntities.length !== permissions.length) {
+        return res.status(400).json({ message: "Some permissions not found" });
+      }
+      role.permissions = permissionEntities;
+      await roleRepository.save(role);
+      res.status(200).json({
+        message: "Permissions assigned to role successfully",
+        data: role,
       });
     } catch (error) {
       next(error);

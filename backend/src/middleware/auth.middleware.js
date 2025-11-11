@@ -16,10 +16,14 @@ const authMiddleware = (req, res, next) => {
 
     const decoded = verifyToken(token);
 
+    //add the details in req.user so that it is available to other requests
     req.user = {
       id: decoded.id,
       email: decoded.email,
       username: decoded.username,
+      isAdmin: decoded.isAdmin || false,
+      permissions: decoded.permissions || [],
+      role: decoded.role || null,
     };
 
     next();

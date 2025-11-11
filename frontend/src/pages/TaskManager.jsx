@@ -35,12 +35,24 @@ const TaskManager = () => {
   const loadTasks = async () => {
     try {
       setLoading(true);
+      //check if user has permission to view tasks
+      if (!canViewTask && !user?.isAdmin) {
+        setError("You don't have permission to view tasks");
+        setTasks([]);
+        return;
+      }
+
       const response = await taskService.getAll();
       setTasks(response || []);
       setError("");
     } catch (err) {
       console.error("Error loading tasks:", err);
-      setError(err.message || "Failed to load tasks. Please try again.");
+      if (err.message?.includes("Permission denied")) {
+        setError("You don't have permission to view tasks");
+        setTasks([]);
+      } else {
+        setError(err.message || "Failed to load tasks. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +92,12 @@ const TaskManager = () => {
       loadTasks();
     } catch (err) {
       console.error("Error adding task:", err);
-      setError(err.message || "Failed to add task. Please try again.");
+      //permission error handling
+      if (err.message?.includes("Permission denied")) {
+        setError("You don't have permission to create tasks.");
+      } else {
+        setError(err.message || "Failed to add task. Please try again.");
+      }
     }
   };
 
@@ -105,7 +122,11 @@ const TaskManager = () => {
       loadTasks();
     } catch (err) {
       console.error("Error deleting task:", err);
-      setError(err.message || "Failed to delete task");
+      if (err.message?.includes("Permission denied")) {
+        setError("You don't have permission to delete tasks");
+      } else {
+        setError(err.message || "Failed to delete task");
+      }
     }
   };
 
@@ -344,6 +365,26 @@ const TaskManager = () => {
     document.body.removeChild(link);
   };
 
+  const hasPermission = (permissionName) => {
+    // return user?.isAdmin || user?.permissions?.includes(permissionName);
+    if (user?.isAdmin) return true;
+    if (!user?.permissions) return false;
+    return user.permissions.includes(permissionName);
+  };
+  const canCreateTask = hasPermission("CREATE_TASK");
+  const canEditTask = hasPermission("EDIT_TASK");
+  const canDeleteTask = hasPermission("DELETE_TASK");
+  const canViewTask = hasPermission("VIEW_TASKS");
+  console.log("🔍 DEBUG PERMISSIONS:", {
+    user: user,
+    permissions: user?.permissions,
+    canViewTask: canViewTask,
+    canCreateTask: canCreateTask,
+    canEditTask: canEditTask,
+    canDeleteTask: canDeleteTask,
+  });
+  console.log("User object", user);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
       {/* Navbar */}
@@ -379,12 +420,14 @@ const TaskManager = () => {
                 Download CSV
               </button>
 
-              <button
-                onClick={() => setShowModal(true)}
-                className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all whitespace-nowrap flex-shrink-0"
-              >
-                ➕ Add Task
-              </button>
+              {canCreateTask && (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all whitespace-nowrap flex-shrink-0"
+                >
+                  ➕ Add Task
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="px-3 sm:px-4 py-2 text-sm sm:text-base font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap flex-shrink-0"
@@ -477,6 +520,7 @@ const TaskManager = () => {
                         type="checkbox"
                         checked={task.isDone}
                         onChange={() => toggleTask(task.id)}
+                        disabled={!canEditTask} // disable if no edit permission
                         className="w-5 h-5 mt-1 cursor-pointer accent-teal-600 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
@@ -503,18 +547,23 @@ const TaskManager = () => {
                         >
                           🖨️ Print
                         </button>
-                        <button
-                          onClick={() => startEdit(task)}
-                          className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => deleteTask(task.id)}
-                          className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors"
-                        >
-                          🗑️ Delete
-                        </button>
+
+                        {canEditTask && (
+                          <button
+                            onClick={() => startEdit(task)}
+                            className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                        {canDeleteTask && (
+                          <button
+                            onClick={() => deleteTask(task.id)}
+                            className="px-3 py-1.5 text-xs sm:text-sm font-medium text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors"
+                          >
+                            🗑️ Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

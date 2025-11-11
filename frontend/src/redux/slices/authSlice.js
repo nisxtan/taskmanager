@@ -7,6 +7,7 @@ const initialState = {
     username: null,
     email: null,
     isAdmin: false,
+    permissions: [],
   },
   isAuthenticated: false,
 };
@@ -16,9 +17,18 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      const { token, id, username, email, isAdmin } = action.payload;
+      // const { data } = action.payload;
+      console.log(action.payload);
+      const { token, id, username, email, isAdmin, permissions } =
+        action.payload;
       state.token = token;
-      state.user = { id, username, email, isAdmin: isAdmin || false };
+      state.user = {
+        id,
+        username,
+        email,
+        isAdmin: isAdmin || false,
+        permissions: permissions || [],
+      };
       state.isAuthenticated = true;
     },
     logout: (state) => {

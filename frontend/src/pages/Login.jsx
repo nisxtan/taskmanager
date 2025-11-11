@@ -39,6 +39,8 @@ const Login = () => {
           id: response.data.id,
           username: response.data.username,
           email: response.data.email,
+          isAdmin: response.data.isAdmin || false,
+          permissions: response.data.permissions || [],
         })
       );
       alert("Login successful!");
