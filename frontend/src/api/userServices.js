@@ -189,7 +189,7 @@ const userService = {
     }
   },
 
-  // ✅ NEW: Assign permissions to role
+  //
   assignPermissionsToRole: async (roleId, permissions) => {
     try {
       const response = await axiosInstance.put(

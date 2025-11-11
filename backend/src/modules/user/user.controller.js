@@ -639,9 +639,9 @@ class UserController {
       });
 
       const rolesWithPermission = allRoles.filter((role) =>
-        role.permission.some((permission) => permission.id === parseInt(id))
+        role.permissions.some((permission) => permission.id === parseInt(id))
       );
-      if (rolesWithPermission > 0) {
+      if (rolesWithPermission.length > 0) {
         return res.status(400).json({
           message: "Cannot delete permission, it is assigned to some users",
         });
