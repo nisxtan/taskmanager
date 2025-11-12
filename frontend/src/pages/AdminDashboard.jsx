@@ -28,13 +28,14 @@ const AdminDashboard = () => {
       const rolesResponse = await userService.getAllRoles();
       setRoles(rolesResponse.data);
 
+      // Always fetch permissions for role management
+      const permissionsResponse = await userService.getAllPermissions();
+      setPermissions(permissionsResponse.data);
+
       if (activeTab === "users") {
         const usersResponse = await userService.getAllUsersWithRoles();
         const regularUsers = usersResponse.data.filter((user) => !user.isAdmin);
         setUsers(regularUsers);
-      } else if (activeTab === "permissions") {
-        const permissionsResponse = await userService.getAllPermissions();
-        setPermissions(permissionsResponse.data);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -166,6 +167,12 @@ const AdminDashboard = () => {
         {message && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-blue-800">{message}</p>
+            <button
+              onClick={() => setMessage("")}
+              className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -350,17 +357,66 @@ const RoleManagement = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Initialize selected permissions when editing a role
+  useEffect(() => {
     if (editingRole) {
-      onUpdateRole(editingRole.id, formData);
+      setSelectedPermissions(editingRole.permissions?.map((p) => p.id) || []);
+      setFormData({
+        name: editingRole.name,
+        description: editingRole.description,
+      });
     } else {
-      onCreateRole(formData);
+      setSelectedPermissions([]);
+      setFormData({ name: "", description: "" });
     }
-    setShowCreateForm(false);
-    setEditingRole(null);
-    setFormData({ name: "", description: "" });
+  }, [editingRole]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      if (editingRole) {
+        // Update role details and permissions together
+        await onUpdateRole(editingRole.id, formData);
+        await onAssignPermissions(editingRole.id, selectedPermissions);
+      } else {
+        // Create new role
+        const newRole = await onCreateRole(formData);
+        // If we have a new role ID and permissions to assign, assign them
+        if (newRole && selectedPermissions.length > 0) {
+          await onAssignPermissions(newRole.id, selectedPermissions);
+        }
+      }
+
+      // Reset form
+      setShowCreateForm(false);
+      setEditingRole(null);
+      setFormData({ name: "", description: "" });
+      setSelectedPermissions([]);
+    } catch (error) {
+      console.error("Error saving role:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle permission selection
+  const handlePermissionChange = (permissionId) => {
+    setSelectedPermissions(
+      (prev) =>
+        prev.includes(permissionId)
+          ? prev.filter((id) => id !== permissionId) // Remove permission
+          : [...prev, permissionId] // Add permission
+    );
+  };
+
+  // Remove a single permission from selection
+  const handleRemovePermission = (permissionId) => {
+    setSelectedPermissions((prev) => prev.filter((id) => id !== permissionId));
   };
 
   return (
@@ -379,44 +435,148 @@ const RoleManagement = ({
 
       {/* Create/Edit Role Form */}
       {(showCreateForm || editingRole) && (
-        <div className="bg-slate-50 rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold mb-4">
-            {editingRole ? "Edit Role" : "Create New Role"}
+        <div className="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
+          <h3 className="text-lg font-semibold mb-4 text-slate-800">
+            {editingRole ? "Edit Role & Permissions" : "Create New Role"}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Role Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                required
-              />
+            {/* Role Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Role Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  required
+                  placeholder="Enter role name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Enter role description"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                rows="3"
-              />
+
+            {/* Permission Assignment Section */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-md font-semibold text-slate-800 mb-3">
+                Manage Permissions
+              </h4>
+
+              {/* Selected Permissions */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Selected Permissions ({selectedPermissions.length})
+                </label>
+                <div className="flex flex-wrap gap-2 min-h-[60px] p-3 border border-slate-200 rounded-lg bg-white">
+                  {selectedPermissions.length === 0 ? (
+                    <span className="text-slate-400 text-sm">
+                      No permissions selected. Choose from the list below.
+                    </span>
+                  ) : (
+                    selectedPermissions.map((permissionId) => {
+                      const permission = permissions.find(
+                        (p) => p.id === permissionId
+                      );
+                      return permission ? (
+                        <span
+                          key={permission.id}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200"
+                        >
+                          {permission.name}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRemovePermission(permission.id)
+                            }
+                            className="ml-2 text-green-600 hover:text-green-800 focus:outline-none text-sm font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : null;
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Available Permissions */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Available Permissions
+                </label>
+                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-4 bg-white">
+                  {permissions.length === 0 ? (
+                    <p className="text-slate-500 text-sm text-center py-4">
+                      No permissions available. Create some in the Permission
+                      Management tab.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {permissions.map((permission) => (
+                        <label
+                          key={permission.id}
+                          className="flex items-start space-x-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPermissions.includes(
+                              permission.id
+                            )}
+                            onChange={() =>
+                              handlePermissionChange(permission.id)
+                            }
+                            className="mt-1 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-slate-800 text-sm truncate">
+                              {permission.name}
+                            </div>
+                            <div className="text-slate-600 text-xs mt-1 line-clamp-2">
+                              {permission.description}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
+
+            {/* Form Actions */}
+            <div className="flex gap-2 pt-4 justify-end">
               <button
                 type="submit"
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                disabled={saving}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {editingRole ? "Update Role" : "Create Role"}
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Saving...
+                  </>
+                ) : editingRole ? (
+                  "Save Role & Permissions"
+                ) : (
+                  "Create Role"
+                )}
               </button>
               <button
                 type="button"
@@ -424,6 +584,7 @@ const RoleManagement = ({
                   setShowCreateForm(false);
                   setEditingRole(null);
                   setFormData({ name: "", description: "" });
+                  setSelectedPermissions([]);
                 }}
                 className="px-4 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors"
               >
@@ -441,56 +602,65 @@ const RoleManagement = ({
         </div>
       ) : (
         <div className="space-y-4">
-          {roles.map((role) => (
-            <div
-              key={role.id}
-              className="border border-slate-200 rounded-lg p-4"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    {role.name}
-                  </h3>
-                  <p className="text-slate-600 text-sm">{role.description}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingRole(role);
-                      setFormData({
-                        name: role.name,
-                        description: role.description,
-                      });
-                    }}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDeleteRole(role.id)}
-                    className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {role.permissions?.map((permission) => (
-                  <span
-                    key={permission.id}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                  >
-                    {permission.name}
-                  </span>
-                ))}
-                {(!role.permissions || role.permissions.length === 0) && (
-                  <span className="text-slate-400 text-sm">
-                    No permissions assigned
-                  </span>
-                )}
-              </div>
+          {roles.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              No roles created yet. Create your first role to get started.
             </div>
-          ))}
+          ) : (
+            roles.map((role) => (
+              <div
+                key={role.id}
+                className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-800">
+                      {role.name}
+                    </h3>
+                    <p className="text-slate-600 text-sm mt-1">
+                      {role.description}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingRole(role)}
+                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Edit Role & Permissions
+                    </button>
+                    <button
+                      onClick={() => onDeleteRole(role.id)}
+                      className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                {/* Current Permissions Display */}
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-slate-700 mb-2">
+                    Assigned Permissions:
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {role.permissions?.map((permission) => (
+                      <span
+                        key={permission.id}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200"
+                      >
+                        {permission.name}
+                      </span>
+                    ))}
+                    {(!role.permissions || role.permissions.length === 0) && (
+                      <span className="text-slate-400 text-sm">
+                        No permissions assigned
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -544,7 +714,7 @@ const PermissionManagement = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Permission Name
+                Permission Name *
               </label>
               <input
                 type="text"
@@ -554,11 +724,12 @@ const PermissionManagement = ({
                 }
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 required
+                placeholder="e.g., user.create, user.delete"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Description
+                Description *
               </label>
               <textarea
                 value={formData.description}
@@ -568,6 +739,7 @@ const PermissionManagement = ({
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 rows="3"
                 required
+                placeholder="Describe what this permission allows"
               />
             </div>
             <div className="flex gap-2">
@@ -600,39 +772,48 @@ const PermissionManagement = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {permissions.map((permission) => (
-            <div
-              key={permission.id}
-              className="border border-slate-200 rounded-lg p-4"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-slate-800">
-                  {permission.name}
-                </h3>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => {
-                      setEditingPermission(permission);
-                      setFormData({
-                        name: permission.name,
-                        description: permission.description,
-                      });
-                    }}
-                    className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDeletePermission(permission.id)}
-                    className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <p className="text-slate-600 text-sm">{permission.description}</p>
+          {permissions.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-slate-500">
+              No permissions created yet. Create your first permission to get
+              started.
             </div>
-          ))}
+          ) : (
+            permissions.map((permission) => (
+              <div
+                key={permission.id}
+                className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-semibold text-slate-800 text-sm">
+                    {permission.name}
+                  </h3>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        setEditingPermission(permission);
+                        setFormData({
+                          name: permission.name,
+                          description: permission.description,
+                        });
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onDeletePermission(permission.id)}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                <p className="text-slate-600 text-xs mt-2">
+                  {permission.description}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
