@@ -6,6 +6,7 @@ const { registerSchema, loginSchema } = require("./validator");
 const jwt = require("jsonwebtoken");
 const adminAuth = require("../../middleware/adminAuth");
 const authMiddleware = require("../../middleware/auth.middleware");
+const { generateToken } = require("../../utils/jwt");
 
 console.log("🔍 USER ROUTER LOADED");
 
@@ -21,12 +22,35 @@ userRouter.get(
     failureRedirect: "http://localhost:5173/login",
   }),
   async (req, res) => {
-    const token = jwt.sign(
-      { id: req.user.id, username: req.user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-    res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const userRepository = AppDataSource.getRepository("User");
+
+      // Get user WITH permissions and role populated
+      const userWithPermissions = await userRepository.findOne({
+        where: { id: req.user.id },
+        relations: ["role", "role.permissions"],
+      });
+
+      // Get permissions from role
+      const permissions =
+        userWithPermissions.role?.permissions?.map((p) => p.name) || [];
+
+      // Use the same generateToken function as regular login
+      const token = generateToken({
+        id: req.user.id,
+        email: req.user.email,
+        username: req.user.username,
+        permissions: permissions,
+        role: userWithPermissions.role ? userWithPermissions.role.name : null,
+        isAdmin: req.user.isAdmin,
+      });
+
+      res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+      res.redirect("http://localhost:5173/login?error=oauth_failed");
+    }
   }
 );
 

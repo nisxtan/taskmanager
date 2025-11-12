@@ -21,6 +21,9 @@ const AuthSuccess = () => {
           username: decoded.username,
           email: decoded.email,
           token: token,
+          permissions: decoded.permissions || [],
+          role: decoded.role || null,
+          isAdmin: decoded.isAdmin || false,
         })
       );
       localStorage.setItem("token", token);
