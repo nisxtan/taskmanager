@@ -6,17 +6,60 @@ import TaskManager from "./pages/TaskManager";
 import AuthSuccess from "./pages/AuthSuccess";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import {
+  AdminRoute,
+  GuestRoute,
+  ProtectedRoute,
+} from "./component/ProtectedRoute";
 
 const App = () => {
   return (
     <Routes>
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/home" element={<TaskManager />} />
+      <Route
+        path="/register"
+        element={
+          <GuestRoute>
+            <Register />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <GuestRoute>
+            <Login />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/admin/login"
+        element={
+          <GuestRoute>
+            <AdminLogin />
+          </GuestRoute>
+        }
+      />
       <Route path="/auth/success" element={<AuthSuccess />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/" element={<Navigate to="/register" />} />
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <TaskManager />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      {/* //default route */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* //catch all redirects to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };
