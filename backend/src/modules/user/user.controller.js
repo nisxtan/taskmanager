@@ -1,6 +1,7 @@
 const userService = require("./user.services");
 const { generateToken } = require("../../utils/jwt");
-const { In } = require("typeorm");
+const { In, MongoUnexpectedServerResponseError } = require("typeorm");
+const AppDataSource = require("../../config/database");
 
 class UserController {
   async register(req, res, next) {
@@ -118,18 +119,7 @@ class UserController {
         where: { id: user.id },
         relations: ["role", "role.permissions"],
       });
-      // In your login method, after fetching userWithPermissions
-      // console.log(
-      //   "🔍 RAW PERMISSIONS FROM DB:",
-      //   userWithPermissions.role?.permissions
-      // );
-      // console.log(
-      //   "🔍 PERMISSION NAMES:",
-      //   userWithPermissions.role?.permissions?.map((p) => p.name)
-      // );
 
-      //determine permissions from role
-      // Since we know permissions exist from the earlier debug, just use them
       const permissions = userWithPermissions.role.permissions.map(
         (p) => p.name
       );
@@ -303,6 +293,131 @@ class UserController {
       });
     } catch (err) {
       next(err);
+    }
+  }
+
+  async getCurrentUser(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const user = await userService.getUserProfile(AppDataSource, req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found.",
+        });
+      }
+      res.status(200).json({
+        message: "Profile fetched successfully",
+        data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateCurrentUser(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { username, email } = req.body;
+      if (!username || !email) {
+        return res.status(400).json({
+          message: "No data to update",
+        });
+      }
+      //check if username already exists
+      if (username) {
+        const usernameTaken = await userService.isUserNameTaken(
+          AppDataSource,
+          username,
+          req.user.id
+        );
+        if (usernameTaken) {
+          return res.status(400).json({
+            message: "Username already taken.",
+          });
+        }
+      }
+
+      //check if email is already taken
+      if (email) {
+        const emailTaken = await userService.isEmailTaken(
+          AppDataSource,
+          email,
+          req.user.id
+        );
+        if (emailTaken) {
+          return res.status(400).json({
+            message:
+              "Email is already registered, please use a different email",
+          });
+        }
+      }
+
+      const updateData = {};
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+
+      const updatedUser = await userService.updateUser(
+        AppDataSource,
+        req.user.id,
+        updateData
+      );
+      res.status(200).json({
+        message: "Profile updated successfully",
+        data: {
+          id: updatedUser.id,
+          username: updatedUser.id,
+          email: updatedUser.email,
+          updatedAt: updatedUser.updatedAt,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async changePassword(req, res, next) {
+    try {
+      const AppDataSource = req.app.get("AppDataSource");
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          message: "Current and new password are required",
+        });
+      }
+      if (newPassword.length < 5) {
+        return res.status(400).json({
+          message: "Password must at least be 6 characters",
+        });
+      }
+
+      //get user with password
+      const user = await userService.findUserByEmail(
+        AppDataSource,
+        req.user.email
+      );
+      if (!user) {
+        return res.status(400).json({
+          message: "User not found",
+        });
+      }
+
+      //verify current password is correct
+      const isCurrentPasswordValid = await userService.comparePassword(
+        currentPassword,
+        user.password
+      );
+      if (!isCurrentPasswordValid) {
+        return res
+          .status(400)
+          .json({ message: "Current password is incorrect" });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await userService.updateUser(AppDataSource, req.user.id, {
+        password: hashedPassword,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 

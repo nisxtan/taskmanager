@@ -26,7 +26,7 @@ userRouter.get(
       const AppDataSource = req.app.get("AppDataSource");
       const userRepository = AppDataSource.getRepository("User");
 
-      // Get user WITH permissions and role populated
+      // Get user with permissions and role populated
       const userWithPermissions = await userRepository.findOne({
         where: { id: req.user.id },
         relations: ["role", "role.permissions"],
@@ -141,7 +141,18 @@ userRouter.put(
   userController.assignPermissionsToRole
 );
 
-// ✅ GENERIC ROUTES LAST (these will match anything with /:id)
+//?User profile routes
+
+// userRouter.get("/profile", authMiddleware, userController.getCurrentUser);
+
+// userRouter.put("/profile", authMiddleware, userController.updateCurrentUser);
+// userRouter.put(
+//   "/profile/change-password",
+//   authMiddleware,
+//   userController.changePassword
+// );
+
+//! GENERIC ROUTES
 // Route to list all the registered users
 userRouter.get("/list-all", userController.getAll);
 

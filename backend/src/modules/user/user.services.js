@@ -1,5 +1,7 @@
 // const { where } = require("sequelize");
 // const AppDataSource = require("../../config/database");
+const { Not } = require("typeorm");
+const AppDataSource = require("../../config/database");
 const User = require("../../entity/User");
 const bcrypt = require("bcryptjs");
 
@@ -72,5 +74,52 @@ module.exports.deleteUser = async (AppDataSource, id) => {
     };
   }
   await userRepo.remove(user);
+  return user;
+};
+
+//check if username exists
+module.exports.isUserNameTaken = async (
+  AppDataSource,
+  username,
+  excludeUserId = null
+) => {
+  const userRepo = AppDataSource.getRepository(User);
+  const whereCondition = { username };
+
+  if (excludeUserId) {
+    whereCondition.id = Not(excludeUserId);
+  }
+
+  const user = await userRepo.findOne({ where: whereCondition });
+
+  return !!user;
+};
+
+//check if email exists
+
+module.exports.isEmailTaken = async (
+  AppDataSource,
+  email,
+  excludeUserId = null
+) => {
+  const userRepo = AppDataSource.getRepository(User);
+  const whereCondition = { email };
+
+  if (excludeUserId) {
+    whereCondition.id = Not(excludeUserId);
+  }
+
+  const user = await userRepo.findOne({ where: whereCondition });
+  return !!user;
+};
+
+//? Get user profile
+module.exports.getUserProfile = async (AppDataSource, id) => {
+  const userRepo = AppDataSource.getRepository(User);
+  const user = await userRepo.findOne({
+    where: { id },
+    relations: ["role"],
+    select: ["id", "username", "email", "createdAt", "updatedAt", "roleId"],
+  });
   return user;
 };
