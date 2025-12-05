@@ -1,18 +1,3 @@
-// console.log(process.env);
-// console.log("🔍 Environment Variables Check:");
-// console.log(
-//   "GOOGLE_CLIENT_ID:",
-//   process.env.GOOGLE_CLIENT_ID ? "✅ EXISTS" : "❌ MISSING"
-// );
-// console.log(
-//   "GOOGLE_CLIENT_SECRET:",
-//   process.env.GOOGLE_CLIENT_SECRET ? "✅ EXISTS" : "❌ MISSING"
-// );
-// console.log(
-//   "GOOGLE_CALLBACK_URL:",
-//   process.env.GOOGLE_CALLBACK_URL ? "✅ EXISTS" : "❌ MISSING"
-// );
-
 require("./passport");
 const passport = require("passport");
 const express = require("express");

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -11,36 +13,28 @@ const AuthSuccess = () => {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      console.log(token);
-      console.log(decoded);
-      dispatch(
-        setCredentials({
+    if (!token) return;
+
+    const decoded = jwtDecode(token);
+
+    dispatch(
+      setCredentials({
+        token,
+        user: {
           id: decoded.id,
           username: decoded.username,
           email: decoded.email,
-          token: token,
+          isAdmin: decoded.isAdmin || false,
           permissions: decoded.permissions || [],
           role: decoded.role || null,
-          isAdmin: decoded.isAdmin || false,
-        })
-      );
-      localStorage.setItem("token", token);
-      navigate("/home");
-    } else {
-      navigate("/login");
-    }
+        },
+      })
+    );
+
+    navigate("/home");
   }, []);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-        <p className="mt-4 text-slate-600">Signing you in...</p>
-      </div>
-    </div>
-  );
+  return <div>Logging you in...</div>;
 };
 
 export default AuthSuccess;

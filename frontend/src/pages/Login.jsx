@@ -33,14 +33,18 @@ const Login = () => {
     try {
       const response = await userService.login(formData);
       console.log("Login successful:", response);
+
       dispatch(
         setCredentials({
           token: response.data.token,
-          id: response.data.id,
-          username: response.data.username,
-          email: response.data.email,
-          isAdmin: response.data.isAdmin || false,
-          permissions: response.data.permissions || [],
+          user: {
+            id: response.data.id,
+            username: response.data.username,
+            email: response.data.email,
+            isAdmin: response.data.isAdmin || false,
+            permissions: response.data.permissions || [],
+            role: response.data.role || null,
+          },
         })
       );
       alert("Login successful!");

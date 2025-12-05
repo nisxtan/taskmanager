@@ -1,4 +1,6 @@
+import axios from "axios";
 import axiosInstance from "./axios";
+import { TransactionAlreadyStartedError } from "typeorm";
 
 const userService = {
   // Register user
@@ -79,7 +81,7 @@ const userService = {
   getAllRoles: async () => {
     try {
       const response = await axiosInstance.get("/user/admin/roles");
-      console.log(response);
+      // console.log(response);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -198,6 +200,36 @@ const userService = {
         {
           permissions,
         }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getCurrentUser: async () => {
+    try {
+      const response = await axiosInstance.get("/user/profile");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateProfile: async (userData) => {
+    try {
+      const response = await axiosInstance.put("/user/profile", userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  changePassword: async (passwordData) => {
+    try {
+      const response = await axiosInstance.put(
+        "/user/profile/change-password",
+        passwordData
       );
       return response.data;
     } catch (error) {

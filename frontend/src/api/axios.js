@@ -57,7 +57,7 @@ axiosInstance.interceptors.response.use(
 
         // Only logout and redirect for authenticated requests that fail
         store.dispatch(logout());
-        window.location.href = "/login";
+        // window.location.href = "/login";
       }
     } else if (error.request) {
       console.error("Network error: ", error.message);

@@ -46,7 +46,14 @@ userRouter.get(
         isAdmin: req.user.isAdmin,
       });
 
-      res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+      // res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+      res.redirect(
+        `http://localhost:5173/auth/success?token=${token}` +
+          `&id=${req.user.id}` +
+          `&username=${encodeURIComponent(req.user.username)}` +
+          `&email=${encodeURIComponent(req.user.email)}` +
+          `&isAdmin=${req.user.isAdmin}`
+      );
     } catch (error) {
       console.error("OAuth callback error:", error);
       res.redirect("http://localhost:5173/login?error=oauth_failed");
@@ -143,14 +150,14 @@ userRouter.put(
 
 //?User profile routes
 
-// userRouter.get("/profile", authMiddleware, userController.getCurrentUser);
+userRouter.get("/profile", authMiddleware, userController.getCurrentUser);
 
-// userRouter.put("/profile", authMiddleware, userController.updateCurrentUser);
-// userRouter.put(
-//   "/profile/change-password",
-//   authMiddleware,
-//   userController.changePassword
-// );
+userRouter.put("/profile", authMiddleware, userController.updateCurrentUser);
+userRouter.put(
+  "/profile/change-password",
+  authMiddleware,
+  userController.changePassword
+);
 
 //! GENERIC ROUTES
 // Route to list all the registered users

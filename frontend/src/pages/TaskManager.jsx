@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import taskService from "../api/taskServices";
 import {
@@ -403,6 +403,12 @@ const TaskManager = () => {
                   </span>
                 </div>
               )}
+              <Link
+                to="/profile"
+                className="text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                My Profile
+              </Link>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">

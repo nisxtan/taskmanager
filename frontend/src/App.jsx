@@ -11,8 +11,16 @@ import {
   GuestRoute,
   ProtectedRoute,
 } from "./component/ProtectedRoute";
+import Profile from "./component/Profile";
+import { store } from "./redux/store";
 
 const App = () => {
+  // const currentState = store.getState();
+  // console.log("🔍 FULL STORE STATE:", currentState);
+  // console.log("🔍 AUTH SLICE:", currentState.auth);
+  // console.log("🔍 PERSIST STATE:", currentState._persist);
+  // console.log("🔍 AUTH PERSIST:", currentState.auth?._persist);
+
   return (
     <Routes>
       <Route
@@ -45,6 +53,14 @@ const App = () => {
         element={
           <ProtectedRoute>
             <TaskManager />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

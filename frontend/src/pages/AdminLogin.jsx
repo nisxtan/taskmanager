@@ -32,18 +32,25 @@ const AdminLogin = () => {
 
     try {
       const response = await userService.adminLogin(formData);
-      console.log("Login successful:", response);
+      // console.log("Login successful:", response);
+
+      // ✅ FIX: Use nested user object structure
       dispatch(
         setCredentials({
           token: response.data.token,
-          id: response.data.id,
-          username: response.data.username,
-          email: response.data.email,
-          isAdmin: response.data.isAdmin,
+          user: {
+            id: response.data.id,
+            username: response.data.username,
+            email: response.data.email,
+            isAdmin: response.data.isAdmin || true,
+            permissions: response.data.permissions || [],
+            role: response.data.role || null,
+          },
         })
       );
-      navigate("/admin/dashboard");
+
       alert("Login successful!");
+      navigate("/admin/dashboard");
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.message || "Login failed. Please try again.");
@@ -111,7 +118,7 @@ const AdminLogin = () => {
               to="/login"
               className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"
             >
-              Login as an user.
+              Login as a user.
             </Link>
           </p>
         </div>

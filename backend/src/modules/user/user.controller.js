@@ -299,6 +299,7 @@ class UserController {
   async getCurrentUser(req, res, next) {
     try {
       const AppDataSource = req.app.get("AppDataSource");
+      console.log(req.user.id);
       const user = await userService.getUserProfile(AppDataSource, req.user.id);
       if (!user) {
         return res.status(404).json({
@@ -365,7 +366,7 @@ class UserController {
         message: "Profile updated successfully",
         data: {
           id: updatedUser.id,
-          username: updatedUser.id,
+          username: updatedUser.username,
           email: updatedUser.email,
           updatedAt: updatedUser.updatedAt,
         },
@@ -415,6 +416,9 @@ class UserController {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await userService.updateUser(AppDataSource, req.user.id, {
         password: hashedPassword,
+      });
+      res.status(200).json({
+        message: "Password change successfully",
       });
     } catch (error) {
       next(error);

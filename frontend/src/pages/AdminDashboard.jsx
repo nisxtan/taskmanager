@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import userService from "../api/userServices";
+import { logout } from "../redux/slices/authSlice"; // Import your logout action
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -50,6 +52,12 @@ const AdminDashboard = () => {
       fetchData();
     }
   }, [isAuthenticated, user, activeTab]);
+
+  // Logout function
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/admin/login");
+  };
 
   // Role Management Functions
   const handleCreateRole = async (roleData) => {
@@ -152,15 +160,40 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header with Logout Button */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-slate-600">
-            Welcome back,{" "}
-            <span className="font-semibold text-teal-600">{user.username}</span>
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800 mb-2">
+                Admin Dashboard
+              </h1>
+              <p className="text-slate-600">
+                Welcome back,{" "}
+                <span className="font-semibold text-teal-600">
+                  {user.username}
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Message Alert */}
@@ -344,7 +377,7 @@ const AdminDashboard = () => {
   );
 };
 
-// Role Management Component
+// Role Management Component (keep this exactly as you have it)
 const RoleManagement = ({
   roles,
   permissions,
@@ -667,7 +700,7 @@ const RoleManagement = ({
   );
 };
 
-// Permission Management Component
+// Permission Management Component (keep this exactly as you have it)
 const PermissionManagement = ({
   permissions,
   loading,
